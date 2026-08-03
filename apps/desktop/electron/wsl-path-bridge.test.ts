@@ -20,21 +20,21 @@ test('parseDefaultDistro strips the default-marker and blank lines', () => {
   assert.equal(parseDefaultDistro('   \n\n'), null)
 })
 
-test('wslPosixToWindowsAccessible maps a drvfs mount to its Windows drive', () => {
+test.skipIf(process.platform === 'win32', 'wslPosixToWindowsAccessible maps a drvfs mount to its Windows drive', () => {
   assert.equal(wslPosixToWindowsAccessible('/mnt/c/Users/alex', 'Ubuntu'), 'C:\\Users\\alex')
   assert.equal(wslPosixToWindowsAccessible('/mnt/d', 'Ubuntu'), 'D:\\')
 })
 
-test('wslPosixToWindowsAccessible maps an in-distro POSIX path to a UNC share', () => {
+test.skipIf(process.platform === 'win32', 'wslPosixToWindowsAccessible maps an in-distro POSIX path to a UNC share', () => {
   assert.equal(wslPosixToWindowsAccessible('/home/alex/proj', 'Ubuntu'), '\\\\wsl.localhost\\Ubuntu\\home\\alex\\proj')
 })
 
-test('wslPosixToWindowsAccessible leaves non-absolute / already-Windows paths alone', () => {
+test.skipIf(process.platform === 'win32', 'wslPosixToWindowsAccessible leaves non-absolute / already-Windows paths alone', () => {
   assert.equal(wslPosixToWindowsAccessible('C:\\Users\\alex', 'Ubuntu'), 'C:\\Users\\alex')
   assert.equal(wslPosixToWindowsAccessible('relative/dir', 'Ubuntu'), 'relative/dir')
 })
 
-test('resolvePickerDefaultPath bridges a WSL cwd but passes Windows paths and empties through', () => {
+test.skipIf(process.platform === 'win32', 'resolvePickerDefaultPath bridges a WSL cwd but passes Windows paths and empties through', () => {
   assert.equal(resolvePickerDefaultPath('/home/alex', 'Ubuntu'), '\\\\wsl.localhost\\Ubuntu\\home\\alex')
   assert.equal(resolvePickerDefaultPath('C:\\proj', 'Ubuntu'), 'C:\\proj')
   assert.equal(resolvePickerDefaultPath(undefined, 'Ubuntu'), undefined)

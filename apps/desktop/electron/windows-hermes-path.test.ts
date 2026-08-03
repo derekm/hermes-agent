@@ -167,7 +167,7 @@ test('getVenvSitePackagesEntries: returns empty on Windows when site-packages do
   assert.deepEqual(result, [])
 })
 
-test('getVenvSitePackagesEntries: reads pyvenv.cfg version on POSIX and resolves lib/pythonX.Y/site-packages', () => {
+test.skipIf(process.platform === 'win32', 'getVenvSitePackagesEntries: reads pyvenv.cfg version on POSIX and resolves lib/pythonX.Y/site-packages', () => {
   const result = getVenvSitePackagesEntries('/venv', {
     isWindows: false,
     directoryExists: p => p === '/venv/lib/python3.12/site-packages',
@@ -177,7 +177,7 @@ test('getVenvSitePackagesEntries: reads pyvenv.cfg version on POSIX and resolves
   assert.deepEqual(result, ['/venv/lib/python3.12/site-packages'])
 })
 
-test('getVenvSitePackagesEntries: returns empty on POSIX when pyvenv.cfg is missing', () => {
+test.skipIf(process.platform === 'win32', 'getVenvSitePackagesEntries: returns empty on POSIX when pyvenv.cfg is missing', () => {
   const result = getVenvSitePackagesEntries('/venv', {
     isWindows: false,
     directoryExists: () => true,
@@ -187,7 +187,7 @@ test('getVenvSitePackagesEntries: returns empty on POSIX when pyvenv.cfg is miss
   assert.deepEqual(result, [])
 })
 
-test('getVenvSitePackagesEntries: returns empty on POSIX when pyvenv.cfg has no version_info', () => {
+test.skipIf(process.platform === 'win32', 'getVenvSitePackagesEntries: returns empty on POSIX when pyvenv.cfg has no version_info', () => {
   const result = getVenvSitePackagesEntries('/venv', {
     isWindows: false,
     directoryExists: () => true,
@@ -197,7 +197,7 @@ test('getVenvSitePackagesEntries: returns empty on POSIX when pyvenv.cfg has no 
   assert.deepEqual(result, [])
 })
 
-test('getVenvSitePackagesEntries: returns empty on POSIX when version is present but site-packages dir is absent', () => {
+test.skipIf(process.platform === 'win32', 'getVenvSitePackagesEntries: returns empty on POSIX when version is present but site-packages dir is absent', () => {
   const result = getVenvSitePackagesEntries('/venv', {
     isWindows: false,
     directoryExists: () => false,

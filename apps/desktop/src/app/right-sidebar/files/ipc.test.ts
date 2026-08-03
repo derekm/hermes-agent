@@ -1,6 +1,6 @@
 /// <reference types="node" />
 
-import { Buffer } from 'node:buffer'
+import { Buffer } from 'buffer'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 

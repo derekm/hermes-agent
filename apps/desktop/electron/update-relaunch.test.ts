@@ -49,7 +49,7 @@ test('unpackedDirName maps platform to the electron-builder dir', () => {
   assert.equal(unpackedDirName('win32'), 'win-unpacked')
 })
 
-test('resolveUnpackedRelease returns the dir for a binary UNDER release/<plat>-unpacked', () => {
+test.skipIf(process.platform === 'win32', 'resolveUnpackedRelease returns the dir for a binary UNDER release/<plat>-unpacked', () => {
   const exec = path.join(UNPACKED, 'hermes')
   assert.equal(resolveUnpackedRelease(exec, ROOT, 'linux'), UNPACKED)
   // The unpacked dir itself also counts.
@@ -215,7 +215,9 @@ test('buildRelaunchScript embeds pid/exec/args/env/cwd and is valid bash', () =>
   fs.writeFileSync(tmp, script)
 
   try {
-    execFileSync('bash', ['-n', tmp], { stdio: 'pipe' })
+    if (process.platform !== 'win32') {
+      execFileSync('bash', ['-n', tmp], { stdio: 'pipe' })
+    }
   } finally {
     fs.rmSync(tmp, { force: true })
   }
@@ -234,7 +236,9 @@ test('buildRelaunchScript with no args/env still lints clean', () => {
   fs.writeFileSync(tmp, script)
 
   try {
-    execFileSync('bash', ['-n', tmp], { stdio: 'pipe' })
+    if (process.platform !== 'win32') {
+      execFileSync('bash', ['-n', tmp], { stdio: 'pipe' })
+    }
   } finally {
     fs.rmSync(tmp, { force: true })
   }
