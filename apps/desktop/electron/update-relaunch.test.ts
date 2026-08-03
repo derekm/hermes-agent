@@ -37,7 +37,39 @@ import {
   unpackedDirName
 } from './update-relaunch'
 
-const ROOT = '/home/u/.hermes/hermes-agent'
+import { findGitBash } from './find-git-bash'
+
+// Resolve a bash executable so the generated relaunch script can be linted
+// with `bash -n` on any platform. On Windows this locates Git Bash's bash.exe;
+// on POSIX it uses bash from PATH. Returns null only when bash is genuinely
+// unavailable, in which case the lint is skipped rather than failing.
+function resolveBash(): string | null {
+  return findGitBash({
+    isWindows: process.platform === 'win32',
+    env: process.env as Record<string, string | undefined>,
+    fileExists: (p) => fs.existsSync(p),
+    findOnPath: (cmd) => {
+      try {
+        const out = execFileSync(process.platform === 'win32' ? 'where' : 'command', [cmd], {
+          stdio: 'pipe'
+        })
+          .toString()
+          .trim()
+          .split('\n')[0]
+
+        return out || null
+      } catch {
+        return null
+      }
+    }
+  })
+}
+
+// path.resolve gives a platform-consistent absolute base: a drive-absolute
+// path on Windows, a plain absolute path on POSIX. This keeps
+// resolveUnpackedRelease's path.resolve(execPath) comparison consistent with
+// the unpacked dir built from ROOT on every platform.
+const ROOT = path.resolve('/home/u/.hermes/hermes-agent')
 const UNPACKED = path.join(ROOT, 'apps', 'desktop', 'release', 'linux-unpacked')
 
 // ---------------------------------------------------------------------------
@@ -49,7 +81,7 @@ test('unpackedDirName maps platform to the electron-builder dir', () => {
   assert.equal(unpackedDirName('win32'), 'win-unpacked')
 })
 
-test.skipIf(process.platform === 'win32', 'resolveUnpackedRelease returns the dir for a binary UNDER release/<plat>-unpacked', () => {
+test('resolveUnpackedRelease returns the dir for a binary UNDER release/<plat>-unpacked', () => {
   const exec = path.join(UNPACKED, 'hermes')
   assert.equal(resolveUnpackedRelease(exec, ROOT, 'linux'), UNPACKED)
   // The unpacked dir itself also counts.
@@ -215,8 +247,9 @@ test('buildRelaunchScript embeds pid/exec/args/env/cwd and is valid bash', () =>
   fs.writeFileSync(tmp, script)
 
   try {
-    if (process.platform !== 'win32') {
-      execFileSync('bash', ['-n', tmp], { stdio: 'pipe' })
+    const bash = resolveBash()
+    if (bash) {
+      execFileSync(bash, ['-n', tmp], { stdio: 'pipe' })
     }
   } finally {
     fs.rmSync(tmp, { force: true })
@@ -236,8 +269,9 @@ test('buildRelaunchScript with no args/env still lints clean', () => {
   fs.writeFileSync(tmp, script)
 
   try {
-    if (process.platform !== 'win32') {
-      execFileSync('bash', ['-n', tmp], { stdio: 'pipe' })
+    const bash = resolveBash()
+    if (bash) {
+      execFileSync(bash, ['-n', tmp], { stdio: 'pipe' })
     }
   } finally {
     fs.rmSync(tmp, { force: true })

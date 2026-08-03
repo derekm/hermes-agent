@@ -26,7 +26,7 @@ test('parseSshConfigIncludes extracts include tokens', () => {
   assert.deepEqual(parseSshConfigIncludes(cfg), ['~/.ssh/config.d/*', 'work_hosts', 'personal_hosts'])
 })
 
-test.skipIf(process.platform === 'win32', 'collectSshConfigHosts follows Include directives (read-only)', () => {
+test.skipIf(process.platform === 'win32')('collectSshConfigHosts follows Include directives (read-only)', () => {
   const files = {
     '/home/u/.ssh/config': 'Host main\nInclude work\nInclude ~/abs_inc',
     '/home/u/.ssh/work': 'Host work-box\nInclude nested',
@@ -46,7 +46,7 @@ test('collectSshConfigHosts tolerates a missing config file', () => {
   assert.deepEqual(collectSshConfigHosts('/nope/config', { homeDir: '/home/u', readFile: () => null }), [])
 })
 
-test.skipIf(process.platform === 'win32', 'collectSshConfigHosts does not loop on a self-include cycle', () => {
+test.skipIf(process.platform === 'win32')('collectSshConfigHosts does not loop on a self-include cycle', () => {
   const files = {
     '/home/u/.ssh/config': 'Host a\nInclude loop',
     '/home/u/.ssh/loop': 'Host b\nInclude config' // points back at config
@@ -60,7 +60,7 @@ test.skipIf(process.platform === 'win32', 'collectSshConfigHosts does not loop o
   assert.deepEqual(hosts.sort(), ['a', 'b'])
 })
 
-test.skipIf(process.platform === 'win32', 'collectSshConfigHosts expands globbed includes via injected globSync', () => {
+test.skipIf(process.platform === 'win32')('collectSshConfigHosts expands globbed includes via injected globSync', () => {
   const files = {
     '/home/u/.ssh/config': 'Host root\nInclude config.d/*',
     '/home/u/.ssh/config.d/10-work': 'Host work',

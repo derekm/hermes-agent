@@ -38,8 +38,13 @@ test('loadOrCreateInstallationId persists and reuses one installation ID', () =>
       loadOrCreateInstallationId(filePath, () => ID_B),
       ID_A
     )
-    if (process.platform !== 'win32') {
-      assert.equal(fs.statSync(filePath).mode & 0o777, 0o600)
+    const mode = fs.statSync(filePath).mode & 0o777
+    // Windows does not enforce POSIX file modes, so we only check that the
+    // file exists and is accessible there; on POSIX the app must write 0o600.
+    if (process.platform === 'win32') {
+      assert.ok(mode > 0, 'identity file should be present and accessible')
+    } else {
+      assert.equal(mode, 0o600)
     }
   }))
 
@@ -52,8 +57,11 @@ test('loadOrCreateInstallationId tightens an existing identity file', () =>
       ID_A
     )
 
-    if (process.platform !== 'win32') {
-      assert.equal(fs.statSync(filePath).mode & 0o777, 0o600)
+    const mode = fs.statSync(filePath).mode & 0o777
+    if (process.platform === 'win32') {
+      assert.ok(mode > 0, 'identity file should be present and accessible')
+    } else {
+      assert.equal(mode, 0o600)
     }
   }))
 
