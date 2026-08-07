@@ -38,6 +38,28 @@ def _neuter_agent_prewarm_timer(request, monkeypatch):
     yield
 
 
+@pytest.fixture(autouse=True)
+def _neuter_notification_poller_start(monkeypatch):
+    """Neuter ``_start_notification_poller`` so no test leaks a poller thread.
+
+    ``session.init`` / ``session.create`` / ``session.reset`` call
+    ``_start_notification_poller``, which spawns a real daemon thread that
+    drains the process-global ``completion_queue`` and emits frames to
+    ``_real_stdout``. A test that starts a session through those handlers
+    but pops it without ``_teardown_session`` leaks that thread into LATER
+    tests, where it (a) writes stray JSON fragments into a monkeypatched
+    chunky stdout mid-assertion (``test_write_json_serializes_concurrent_writes``
+    saw a 9th ``{`` line) and (b) steals/rotates the shared completion queue
+    (the ``requeues_all_unstarted_notifications`` flake). Poller-loop tests
+    call ``_notification_poller_loop`` directly with their own stop events
+    and never go through this entry point, so neutering it is safe here.
+    """
+    done = threading.Event()
+    done.set()
+    monkeypatch.setattr(server, "_start_notification_poller", lambda *a, **k: done)
+    yield
+
+
 def test_session_slot_is_claimed_on_first_turn_not_on_create(monkeypatch, tmp_path):
     home = tmp_path / ".hermes"
     home.mkdir()
@@ -349,6 +371,14 @@ def test_prompt_submit_fails_open_inline_when_compute_host_dispatch_breaks(monke
 
 
 def test_compute_host_turn_end_updates_metadata_mirror(monkeypatch):
+    # Freeze the async update check: _session_info reads get_update_result()
+    # from hermes_cli.banner, which a background prefetch_check thread
+    # populates at import time — the emitted snapshot can see None while a
+    # later call sees 1, making the final equality assertion racy.
+    monkeypatch.setattr("hermes_cli.banner.get_update_result", lambda timeout=0.5: 1)
+    monkeypatch.setattr(
+        "hermes_cli.config.recommended_update_command", lambda: "hermes update"
+    )
     session = _session(
         agent=None,
         agent_ready=threading.Event(),

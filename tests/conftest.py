@@ -1145,6 +1145,17 @@ def _live_system_guard(request, monkeypatch):
                 if parent.pid == test_pid:
                     return True
         except Exception:
+            # The child may have been reaped between Process(pid) and the
+            # parents() walk (TOCTOU: e.g. an LSP mock server that exits on
+            # its own and is waitpid'd by the event loop's child watcher
+            # mid-check). A kill of a PID that no longer exists is a no-op,
+            # same as the stale-PID branch above — re-verify existence and
+            # allow it if gone. If it still exists, fail closed: we could not
+            # prove it is our subtree.
+            try:
+                _psutil.Process(pid)
+            except Exception:
+                return True
             return False
         return False
 
